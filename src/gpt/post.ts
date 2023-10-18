@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import env from "dotenv";
-import { ChatCompletionMessageParam } from "openai/resources/chat";
+import { ChatCompletionMessage } from "openai/resources/chat";
 
 env.config();
 
@@ -9,7 +9,7 @@ const openai = new OpenAI({
 });
 
 export const POST = async (
-  messages: ChatCompletionMessageParam[]
+  messages: ChatCompletionMessage[]
 ): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> => {
   const chatGPT = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
