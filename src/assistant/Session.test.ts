@@ -19,31 +19,34 @@ describe("Assistant Object", () => {
     messages: [{ role: "assistant", content: "I am a robot." }],
   });
 
-  it("Should only contain a single message which states 'I am a robot.'", () => {
-    expect(newAssistant.getMessage(0)).toBe("I am a robot.");
+  it("Should only contain a single message which states 'I am a robot.'", () =>
+    expect(newAssistant.getMessage(0)).toBe("I am a robot."));
+
+  it("Should only contain one message.", () =>
+    expect(newAssistant.chatLength()).toBe(1));
+
+  it("Should be asked a question and store it in messages which would increase the chatLength.", () => {
+    newAssistant.ask("Who are you?");
+    expect(newAssistant.chatLength()).toBe(2);
   });
 
-  it("Should only contain two messages.", () => {
-    expect(newAssistant.chatLength()).toBe(1);
+  it("Should be asking 'Who are you?'", () => {
+    console.log(newAssistant.getMessages());
+    expect(newAssistant.getMessage(1)).toBe("Who are you?");
   });
 
   it(
     "Should save the newAssistant session: " + newAssistant.getFileName(),
-    () => {
-      expect(saveSession(newAssistant)).toBe(true);
-    }
+    () => expect(saveSession(newAssistant)).toBe(true)
   );
 
   it(
     "Should delete of newAssistant session: " + newAssistant.getFileName(),
-    () => {
-      expect(deleteSession(newAssistant)).toBe(true);
-    }
+    () => expect(deleteSession(newAssistant)).toBe(true)
   );
 
-  it("Should only contain a single item.", () => {
+  it("Should only contain a single item.", () =>
     expect(generateSession().getMessage(0)).toBe(
       "\nHello!\nWhat is your name and how can I help you?"
-    );
-  });
+    ));
 });

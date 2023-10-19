@@ -1,9 +1,6 @@
 import { ChatCompletionMessage } from "openai/resources/chat";
-import { ChatRoles, ChatLog } from "./@types";
-import { randomUUID } from "crypto";
+import { ChatRoles } from "./@types";
 import { POST } from "../gpt/post";
-import { writeFileSync } from "fs";
-import sessionConfig from "./config";
 import userInput from "../chat/userInput";
 import Session, { generateSession, saveSession } from "./Session.class";
 import Logger from "ts-logger-node";
@@ -15,17 +12,16 @@ export async function gptQuery(
     role?: ChatRoles;
     print?: boolean;
   }
-): Promise<ChatCompletionMessage> {
+): Promise<ChatCompletionMessage[]> {
   const messages = options?.messages || [];
 
   messages.push({
     role: options?.role || "user",
     content: queryText,
   });
-  const postRes = await POST(messages);
-  messages.push(postRes);
+  messages.push(await POST(messages));
 
-  return postRes;
+  return messages;
 }
 
 export function safeShutdown(session: Session): boolean {

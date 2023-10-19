@@ -69,15 +69,15 @@ export default class Session {
 
   async ask(
     question: string,
-    options: { print?: boolean; role?: ChatRoles }
+    options?: { print?: boolean; role?: ChatRoles }
   ): Promise<ChatCompletionMessage> {
-    if (this.sessionLog.messages === undefined) this.sessionLog.messages = [];
-
     this.sessionLog.messages.push({
       role: options?.role ?? "user",
       content: question,
     });
     const postRes = await POST(this.sessionLog.messages);
+    //console.log("post res:", postRes);
+
     this.sessionLog.messages.push(postRes);
 
     return postRes;

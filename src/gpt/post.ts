@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 export const POST = async (
   messages: ChatCompletionMessage[]
-): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> => {
+): Promise<ChatCompletionMessage> => {
   const chatGPT = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages,

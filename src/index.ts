@@ -2,7 +2,13 @@ import * as readline from "readline";
 import Logger, { textStyles } from "ts-logger-node";
 import initialize from "./initialize";
 import fs from "fs";
-import userInput from "./chat/userInput";
+import Session, {
+  generateSession,
+  saveSession,
+} from "./assistant/Session.class";
+
+let currentSession: Session;
+let sessionList: string[];
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -10,48 +16,90 @@ const rl = readline.createInterface({
   terminal: false,
 });
 
-const numberInput = () => {
-  userInput.yesOrNo("Is this the correct session?", (correctSession: boolean) =>
-    correctSession ? Logger.print("Loading Session..", "GENERAL") : menu()
+const numberInput = (sessionChoice: number, loop: Function) => {
+  Logger.print("Loading Session..", "GENERAL");
+
+  const json = require(`../sessions/${sessionList[sessionChoice - 1]}`);
+
+  currentSession = generateSession(json);
+  Logger.print(
+    ("\n" +
+      currentSession.getMessage(currentSession.chatLength() - 1)) as string,
+    "GENERAL",
+    { style: textStyles.FgGreen }
   );
+
+  loop();
+};
+
+const newSession = (): Session => {
+  Logger.print("Starting a new session...", "GENERAL", {
+    style: textStyles.FgGreen,
+  });
+  return generateSession();
+};
+
+const quitProgram = () => {
+  Logger.print("Quiting...", "GENERAL", {
+    style: textStyles.FgRed,
+  });
+  rl.close();
 };
 
 const stringInput = (sessionChoice: string, loop: Function) => {
   switch (sessionChoice.toLowerCase()) {
     case "x":
-      Logger.print("Quiting...", "GENERAL", {
-        style: textStyles.FgRed,
-      });
-      rl.close();
+      quitProgram();
       break;
     case "n":
-      Logger.print("Starting a new session...", "GENERAL", {
-        style: textStyles.FgGreen,
-      });
+      currentSession = newSession();
+      break;
     default:
       loop();
+      break;
   }
 };
 
 const printMenu = (files: string[]) => {
   files.forEach((f, i) => {
-    Logger.print(`${i}: ${f}`, "GENERAL");
+    Logger.print(`${i + 1}: ${f}`, "GENERAL");
   });
   Logger.print("n: New Session", "GENERAL");
   Logger.print("x: Quit", "GENERAL");
 };
 
-function menu() {
+async function menu() {
   fs.readdir("./sessions", (err, files) => {
     printMenu(files);
+    sessionList = files;
 
     // REWRITE COMPLETELY ADD NEW SESSION OPTION
     (function loop() {
-      rl.question("\nPick a Session: ", async (sessionChoice: string) =>
-        parseInt(sessionChoice)
-          ? numberInput()
-          : stringInput(sessionChoice, loop)
-      );
+      if (!currentSession) {
+        rl.question("\nPick a Session: ", async (sessionChoice: string) => {
+          const parsedChoice = parseInt(sessionChoice);
+          parsedChoice
+            ? numberInput(parsedChoice, loop)
+            : stringInput(sessionChoice, loop);
+        });
+      } else {
+        rl.question("\nYou: ", (userInput) => {
+          if (userInput[0] === "!") {
+            switch (userInput) {
+              case "!q":
+                rl.close();
+            }
+          } else {
+            currentSession.ask(userInput).then((res) => {
+              Logger.print(res.content as string, "GENERAL", {
+                style: textStyles.FgGreen,
+              });
+              saveSession(currentSession);
+              loop();
+            });
+          }
+        });
+      }
     })();
   });
 }
