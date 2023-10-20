@@ -7,8 +7,30 @@ import Session, {
   saveSession,
 } from "./assistant/Session.class";
 
-let currentSession: Session;
-let sessionList: string[];
+const sessionInfo: {
+  currentSession: Session | undefined;
+  sessionList: string[];
+} = {
+  currentSession: undefined,
+  sessionList: [],
+};
+
+const menuOptions = {
+  quit: {
+    menu: {
+      symbol: "x",
+      text: "Quit",
+    },
+    chat: {
+      symbol: "!q",
+      text: "Quit",
+    },
+  },
+  new: {
+    symbol: "n",
+    text: "New",
+  },
+};
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -19,12 +41,16 @@ const rl = readline.createInterface({
 const numberInput = (sessionChoice: number, loop: Function) => {
   Logger.print("Loading Session..", "GENERAL");
 
-  const json = require(`../sessions/${sessionList[sessionChoice - 1]}`);
+  const json = require(`../sessions/${
+    sessionInfo.sessionList[sessionChoice - 1]
+  }`);
 
-  currentSession = generateSession(json);
+  sessionInfo.currentSession = generateSession(json);
   Logger.print(
     ("\n" +
-      currentSession.getMessage(currentSession.chatLength() - 1)) as string,
+      sessionInfo.currentSession.getMessage(
+        sessionInfo.currentSession.chatLength() - 1
+      )) as string,
     "GENERAL",
     { style: textStyles.FgGreen }
   );
@@ -48,11 +74,12 @@ const quitProgram = () => {
 
 const stringInput = (sessionChoice: string, loop: Function) => {
   switch (sessionChoice.toLowerCase()) {
-    case "x":
+    case menuOptions.quit.menu.symbol:
       quitProgram();
       break;
-    case "n":
-      currentSession = newSession();
+    case menuOptions.new.symbol:
+      sessionInfo.currentSession = newSession();
+      menu();
       break;
     default:
       loop();
@@ -64,18 +91,21 @@ const printMenu = (files: string[]) => {
   files.forEach((f, i) => {
     Logger.print(`${i + 1}: ${f}`, "GENERAL");
   });
-  Logger.print("n: New Session", "GENERAL");
-  Logger.print("x: Quit", "GENERAL");
+  Logger.print(`${menuOptions.new.symbol}: ${menuOptions.new.text}`, "GENERAL");
+  Logger.print(
+    `${menuOptions.quit.menu.symbol}: ${menuOptions.quit.menu.text}`,
+    "GENERAL"
+  );
 };
 
 async function menu() {
   fs.readdir("./sessions", (err, files) => {
-    printMenu(files);
-    sessionList = files;
+    sessionInfo.sessionList = files;
 
     // REWRITE COMPLETELY ADD NEW SESSION OPTION
     (function loop() {
-      if (!currentSession) {
+      if (!sessionInfo.currentSession) {
+        printMenu(files);
         rl.question("\nPick a Session: ", async (sessionChoice: string) => {
           const parsedChoice = parseInt(sessionChoice);
           parsedChoice
@@ -86,16 +116,25 @@ async function menu() {
         rl.question("\nYou: ", (userInput) => {
           if (userInput[0] === "!") {
             switch (userInput) {
-              case "!q":
+              case menuOptions.quit.chat.symbol:
                 rl.close();
             }
-          } else {
-            currentSession.ask(userInput).then((res) => {
+          } else if (sessionInfo.currentSession) {
+            sessionInfo.currentSession.ask(userInput).then((res) => {
               Logger.print(res.content as string, "GENERAL", {
                 style: textStyles.FgGreen,
               });
-              saveSession(currentSession);
-              loop();
+              try {
+                if (sessionInfo.currentSession)
+                  saveSession(sessionInfo.currentSession);
+                else
+                  throw new Error(
+                    "Error saving session. Undefined session info."
+                  );
+                loop();
+              } catch (err) {
+                Logger.print(err as string, "ERROR");
+              }
             });
           }
         });
