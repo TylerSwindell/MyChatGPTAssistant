@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { ChatCompletionMessage } from "openai/resources/chat";
 
-export type ChatLog = {
+export type SessionLog = {
   title: string;
   startDate: number;
   id: UUID;

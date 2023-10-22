@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { saveSession, generateSession, deleteSession } from "./Session.class";
-import { ChatLog } from "./@types";
+import { saveSession, generateSession, deleteSession } from "./helper";
 import { randomUUID } from "crypto";
 
 describe("Assistant Object", () => {

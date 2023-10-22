@@ -2,7 +2,8 @@ import { ChatCompletionMessage } from "openai/resources/chat";
 import { ChatRoles } from "./@types";
 import { POST } from "../gpt/post";
 import userInput from "../chat/userInput";
-import Session, { generateSession, saveSession } from "./Session.class";
+import Session from "./Session.class";
+import { generateSession, saveSession } from "./helper";
 import Logger from "ts-logger-node";
 
 export async function gptQuery(
@@ -27,7 +28,10 @@ export async function gptQuery(
 export function safeShutdown(session: Session): boolean {
   try {
     if (!saveSession(session)) throw new Error();
-    Logger.print("Session saved: " + session.getFileName(), "GENERAL");
+    Logger.print(
+      "Session saved: " + session.getFileName() + ".json",
+      "GENERAL"
+    );
   } catch (err) {
     Logger.print(err as string, "ERROR");
     return false;
@@ -35,13 +39,4 @@ export function safeShutdown(session: Session): boolean {
 
   userInput.readline.close();
   return true;
-}
-
-// REWRITE INITIALIZATION TO USE SESSION OBJECT
-export async function initializeSession(
-  importSessionName?: string
-): Promise<Session> {
-  // Fetch imported session info
-
-  return generateSession();
 }
